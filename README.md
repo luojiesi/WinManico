@@ -11,6 +11,12 @@
 *   **⌨️ Native Pass-Through**: Only intercepts the keys you configure. `Alt+Tab`, `Alt+F4`, and `Alt+~` continue to work exactly as you expect.
 *   **⚙️ Fully Configurable**: Customize your hotkeys and preferred apps in `settings.json`.
 
+## 📥 Download
+
+Get the latest version from the **[Releases Page](https://github.com/luojiesi/WinManico/releases/latest)**.
+*   **No installation required**: Just download the zip, extract, and run `WinManico.exe`.
+*   *Note: Requires Windows 10/11 x64.*
+
 ## 💌 Inspiration & Credits
 
 This project was heavily inspired by **[Manico](https://manico.im/)**, an amazing productivity utility for macOS.
