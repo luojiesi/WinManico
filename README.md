@@ -45,5 +45,10 @@ Configure your apps and preferences in `settings.json`:
 3.  Hold generic `Alt` key to summon the dock.
 4.  Press the corresponding number or letter for your app!
 
+## 📜 License
+
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
+See the [LICENSE](LICENSE) file for details.
+
 ---
 *Built with ❤️ for the Windows specific workflow.*
