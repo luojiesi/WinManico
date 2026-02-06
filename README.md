@@ -51,6 +51,12 @@ Configure your apps and preferences in `settings.json`:
 3.  Hold generic `Alt` key to summon the dock.
 4.  Press the corresponding number or letter for your app!
 
+### 💡 Auto-Start
+To enter the "set it and forget it" mode:
+1.  Press `Win + R`, type `shell:startup`, and hit Enter.
+2.  Create a shortcut to `WinManico.exe` in that folder.
+3.  Now it starts with Windows!
+
 ## 📜 License
 
 This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.
