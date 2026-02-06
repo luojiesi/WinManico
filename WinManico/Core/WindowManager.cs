@@ -21,6 +21,19 @@ namespace WinManico.Core
         private IntPtr _previousWindow = IntPtr.Zero;
         private IntPtr _lastTargetWindow = IntPtr.Zero;  // Track what we're switching TO
         private readonly object _switchLock = new object();  // Prevent concurrent switches
+
+        // Common system windows that shouldn't appear in the switcher
+        private static readonly HashSet<string> IgnoredTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Microsoft Text Input Application",
+            "Search",
+            "Start", 
+            "Cortana",
+            "People",
+            "NVIDIA GeForce Overlay",
+            "Settings" // Windows Settings is usually fine, but 'Settings' often catches 'Settings' background process. Let's keep it visible generally, but if user complains we add it here.
+                       // Removing "Settings" from ignore for now, often useful.
+        };
         public List<WindowInfo> GetOpenWindows()
         {
             var windows = new List<WindowInfo>();
@@ -70,6 +83,10 @@ namespace WinManico.Core
 
                 // Skip Program Manager
                 if (title == "Program Manager") return true;
+
+                // Known System Phantom/Noise Windows
+                if (IgnoredTitles.Contains(title) || title.StartsWith("Windows Input Experience", StringComparison.OrdinalIgnoreCase)) 
+                    return true;
 
                 NativeMethods.GetWindowThreadProcessId(hWnd, out uint processId);
                 
