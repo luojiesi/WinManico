@@ -1,0 +1,11 @@
+{
+  "AppConfigs": [
+    {
+      "ProcessName": "cloudmusic",
+      "ShortcutKey": "W",
+      "ExecutablePath": "D:\\Program Files (x86)\\NetEase\\CloudMusic\\cloudmusic.exe"
+    }
+  ],
+  "AutoStartAsAdmin": false,
+  "WhitelistMode": false
+}

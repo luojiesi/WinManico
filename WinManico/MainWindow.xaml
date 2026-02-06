@@ -1,0 +1,62 @@
+<Window x:Class="WinManico.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WinManico"
+        mc:Ignorable="d"
+        Title="WinManico" Height="150" SizeToContent="Width" MinWidth="200" MaxWidth="1400"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Loaded="Window_Loaded">
+    
+    <!-- Resources moved to App.xaml -->
+
+    <Grid>
+        <Border Background="#DD222222" CornerRadius="12" 
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Padding="15">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.5"/>
+            </Border.Effect>
+            
+            <ItemsControl ItemsSource="{Binding Apps}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Icon -->
+                            <Image Source="{Binding Icon}" Width="64" Height="64" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                            <!-- Debug Title -->
+                            <TextBlock Text="{Binding Title}" HorizontalAlignment="Center" 
+                                       VerticalAlignment="Bottom" Margin="0,5,0,0" 
+                                       FontSize="14" Foreground="White" 
+                                       TextTrimming="CharacterEllipsis" MaxWidth="120" 
+                                       ToolTip="{Binding Title}" Grid.Row="1"/>
+                            
+                            <!-- Key Badge -->
+                            <Border Grid.Row="0" Background="White" CornerRadius="10" 
+                                    HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                    Margin="0,0,-5,-5" Width="20" Height="20">
+                                <TextBlock Text="{Binding KeyDisplay}" Foreground="Black" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontSize="12" FontWeight="Bold"/>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+    </Grid>
+</Window>

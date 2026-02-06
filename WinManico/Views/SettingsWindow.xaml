@@ -1,0 +1,107 @@
+<Window x:Class="WinManico.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:WinManico.ViewModels"
+        mc:Ignorable="d"
+        Title="WinManico Settings" Height="600" Width="500"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanResize">
+    
+    <Window.DataContext>
+        <vm:SettingsViewModel/>
+    </Window.DataContext>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="App Key Mappings" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+
+        <!-- General Settings -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <TextBlock Text="General Settings" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            
+            <CheckBox IsChecked="{Binding AutoStartAsAdmin}" Margin="0,0,0,8">
+                <TextBlock TextWrapping="Wrap">
+                    <Run Text="Auto-start as Administrator" FontWeight="SemiBold"/>
+                    <LineBreak/>
+                    <Run Text="Automatically restart with elevated privileges on startup (recommended for Task Manager and other elevated apps)" FontSize="11" Foreground="Gray"/>
+                </TextBlock>
+            </CheckBox>
+            
+            <CheckBox IsChecked="{Binding WhitelistMode}" Margin="0,0,0,0">
+                <TextBlock TextWrapping="Wrap">
+                    <Run Text="Whitelist Mode" FontWeight="SemiBold"/>
+                    <LineBreak/>
+                    <Run Text="Only show configured processes in the switcher (unchecked = show all windows)" FontSize="11" Foreground="Gray"/>
+                </TextBlock>
+            </CheckBox>
+        </StackPanel>
+
+
+        <!-- Add New -->
+        <Border Grid.Row="2" Margin="0,10,0,10" Padding="10" BorderBrush="Gray" BorderThickness="1" CornerRadius="4">
+            <StackPanel>
+                <TextBlock Text="Add New Mapping" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                
+                <StackPanel>
+                    <StackPanel Margin="0,0,0,5">
+                        <TextBlock Text="Process Name (e.g. chrome)"/>
+                        <TextBox Text="{Binding NewProcessName}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    
+                    <Grid Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                            <TextBlock Text="Key (e.g. Q)"/>
+                            <TextBox Text="{Binding NewShortcutKey}" MaxLength="1" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <Button Grid.Column="1" Content="Add" Command="{Binding AddConfigCommand}" VerticalAlignment="Bottom" Padding="10,2" Height="28"/>
+                    </Grid>
+                    
+                    <StackPanel>
+                        <TextBlock Text="Executable Path (optional - for auto-launch)"/>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding NewExecutablePath}" ToolTip="Path to launch if app is not running (e.g., C:\Program Files\Google\Chrome\Application\chrome.exe)"/>
+                            <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseExecutableCommand}" Margin="5,0,0,0" Padding="5,2"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- List -->
+        <DataGrid Grid.Row="3" ItemsSource="{Binding AppConfigs}" AutoGenerateColumns="False" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Process Name" Binding="{Binding ProcessName}" Width="*"/>
+                <DataGridTextColumn Header="Key" Binding="{Binding ShortcutKey}" Width="50"/>
+                <DataGridTextColumn Header="Exe Path" Binding="{Binding ExecutablePath}" Width="2*"/>
+                <DataGridTemplateColumn Width="70">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Remove" Command="{Binding DataContext.RemoveConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Save -->
+        <Button Grid.Row="4" Content="Save Settings" Command="{Binding SaveCommand}" Margin="0,10,0,0" Height="30" FontWeight="Bold"/>
+    </Grid>
+</Window>
