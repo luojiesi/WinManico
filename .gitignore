@@ -16,6 +16,10 @@
 *.userosscache
 *.sln.docstates
 
+# Publish
+publish/
+*.zip
+
 # Logs
 *.log
 debug_log.txt
