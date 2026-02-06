@@ -13,10 +13,26 @@ namespace WinManico
     {
         private NotifyIcon _notifyIcon;
         private SettingsWindow _settingsWindow;
+        private System.Threading.Mutex _mutex;
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // Single Instance Enforcement
+            const string appName = "Global\\WinManicoSingleInstanceMutex";
+            bool createdNew;
+            _mutex = new System.Threading.Mutex(true, appName, out createdNew);
+
+            if (!createdNew)
+            {
+                // App is already running!
+                // Optionally we could try to bring the existing window to front, 
+                // but since it's a background app, just notifying and exiting is safest.
+                System.Windows.MessageBox.Show("WinManico is already active in the background.", "WinManico", MessageBoxButton.OK, MessageBoxImage.Information);
+                Shutdown();
+                return;
+            }
 
             // Check if we should auto-elevate
             var settings = WinManico.Core.Settings.Load();
