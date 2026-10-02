@@ -14,94 +14,173 @@
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="App Key Mappings" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+        <TabControl Grid.Row="0">
+            <!-- TAB 1: Key Mappings -->
+            <TabItem Header="快捷键映射 (Mappings)">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-        <!-- General Settings -->
-        <StackPanel Grid.Row="1" Margin="0,0,0,10">
-            <TextBlock Text="General Settings" FontWeight="SemiBold" Margin="0,0,0,8"/>
-            
-            <CheckBox IsChecked="{Binding AutoStartAsAdmin}" Margin="0,0,0,8">
-                <TextBlock TextWrapping="Wrap">
-                    <Run Text="Auto-start as Administrator" FontWeight="SemiBold"/>
-                    <LineBreak/>
-                    <Run Text="Automatically restart with elevated privileges on startup (recommended for Task Manager and other elevated apps)" FontSize="11" Foreground="Gray"/>
-                </TextBlock>
-            </CheckBox>
-            
-            <CheckBox IsChecked="{Binding WhitelistMode}" Margin="0,0,0,0">
-                <TextBlock TextWrapping="Wrap">
-                    <Run Text="Whitelist Mode" FontWeight="SemiBold"/>
-                    <LineBreak/>
-                    <Run Text="Only show configured processes in the switcher (unchecked = show all windows)" FontSize="11" Foreground="Gray"/>
-                </TextBlock>
-            </CheckBox>
-        </StackPanel>
-
-
-        <!-- Add New -->
-        <Border Grid.Row="2" Margin="0,10,0,10" Padding="10" BorderBrush="Gray" BorderThickness="1" CornerRadius="4">
-            <StackPanel>
-                <TextBlock Text="Add New Mapping" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                
-                <StackPanel>
-                    <StackPanel Margin="0,0,0,5">
-                        <TextBlock Text="Process Name (e.g. chrome)"/>
-                        <TextBox Text="{Binding NewProcessName}" Margin="0,2,0,0"/>
-                    </StackPanel>
-                    
-                    <Grid Margin="0,0,0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
-                            <TextBlock Text="Key (e.g. Q)"/>
-                            <TextBox Text="{Binding NewShortcutKey}" MaxLength="1" Margin="0,2,0,0"/>
+                    <!-- Add New Mapping -->
+                    <Border Grid.Row="0" Margin="0,0,0,10" Padding="10" BorderBrush="LightGray" BorderThickness="1" CornerRadius="4">
+                        <StackPanel>
+                            <TextBlock Text="添加应用映射" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            
+                            <StackPanel Margin="0,0,0,5">
+                                <TextBlock Text="进程名称 (如 chrome, notepad)"/>
+                                <TextBox Text="{Binding NewProcessName}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                    <TextBlock Text="快捷键 (如 Q, 1)"/>
+                                    <TextBox Text="{Binding NewShortcutKey}" MaxLength="1" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" Content="添加" Command="{Binding AddConfigCommand}" VerticalAlignment="Bottom" Padding="15,2" Height="28"/>
+                            </Grid>
+                            
+                            <StackPanel>
+                                <TextBlock Text="启动路径 (可选 - 未运行时自动启动)"/>
+                                <Grid Margin="0,2,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" Text="{Binding NewExecutablePath}" ToolTip="如 C:\Program Files\Google\Chrome\Application\chrome.exe"/>
+                                    <Button Grid.Column="1" Content="浏览..." Command="{Binding BrowseExecutableCommand}" Margin="5,0,0,0" Padding="8,2"/>
+                                </Grid>
+                            </StackPanel>
                         </StackPanel>
-                        
-                        <Button Grid.Column="1" Content="Add" Command="{Binding AddConfigCommand}" VerticalAlignment="Bottom" Padding="10,2" Height="28"/>
-                    </Grid>
+                    </Border>
+
+                    <!-- Mappings List -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding AppConfigs}" AutoGenerateColumns="False" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="进程名称" Binding="{Binding ProcessName}" Width="*"/>
+                            <DataGridTextColumn Header="快捷键" Binding="{Binding ShortcutKey}" Width="60"/>
+                            <DataGridTextColumn Header="可执行文件路径" Binding="{Binding ExecutablePath}" Width="2*"/>
+                            <DataGridTemplateColumn Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="删除" Command="{Binding DataContext.RemoveConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 2: Blacklist -->
+            <TabItem Header="应用黑名单 (Blacklist)">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Explanation banner -->
+                    <Border Grid.Row="0" Background="#F4F6F8" BorderBrush="#D0D7DE" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,10">
+                        <TextBlock TextWrapping="Wrap" Foreground="#24292F" FontSize="11">
+                            <Run FontWeight="SemiBold" Text="💡 黑名单说明："/>
+                            <LineBreak/>
+                            <Run Text="当处于黑名单中的应用（例如暗黑破坏神、全屏游戏等）为当前活动窗口时，WinManico 将彻底静默，不会拦截 Alt 键或任何按键，确保游戏内高亮物品、鼠标宏及技能按键完全不受干扰。"/>
+                        </TextBlock>
+                    </Border>
+
+                    <!-- Add to Blacklist Box -->
+                    <Border Grid.Row="1" Margin="0,0,0,10" Padding="10" BorderBrush="LightGray" BorderThickness="1" CornerRadius="4">
+                        <StackPanel>
+                            <TextBlock Text="添加黑名单应用" FontWeight="SemiBold" Margin="0,0,0,6"/>
+
+                            <TextBlock Text="输入进程名称 (如 Diablo IV, D2R, notepad)：" FontSize="11" Foreground="Gray"/>
+                            <Grid Margin="0,2,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding NewBlacklistProcessName, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="浏览 .exe..." Command="{Binding BrowseBlacklistExeCommand}" Margin="5,0,0,0" Padding="8,3"/>
+                                <Button Grid.Column="2" Content="添加" Command="{Binding AddBlacklistCommand}" Margin="5,0,0,0" Padding="12,3" FontWeight="SemiBold"/>
+                            </Grid>
+
+                            <TextBlock Text="或从当前打开的窗口中快速选取：" FontSize="11" Foreground="Gray"/>
+                            <Grid Margin="0,2,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding RunningProcesses}" SelectedItem="{Binding SelectedRunningProcess}" VerticalContentAlignment="Center"/>
+                                <Button Grid.Column="1" Content="刷新窗口" Command="{Binding RefreshRunningProcessesCommand}" Margin="5,0,0,0" Padding="8,3"/>
+                                <Button Grid.Column="2" Content="加入黑名单" Command="{Binding AddBlacklistCommand}" Margin="5,0,0,0" Padding="8,3"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Blacklist List -->
+                    <ListView Grid.Row="2" ItemsSource="{Binding Blacklist}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="黑名单进程名称 (Process Name)" Width="350">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="4,2"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="操作" Width="80">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="删除" Command="{Binding DataContext.RemoveBlacklistCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}" Padding="8,2"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 3: General Settings -->
+            <TabItem Header="通用设置 (General)">
+                <StackPanel Margin="15">
+                    <TextBlock Text="通用选项" FontWeight="Bold" FontSize="14" Margin="0,0,0,12"/>
                     
-                    <StackPanel>
-                        <TextBlock Text="Executable Path (optional - for auto-launch)"/>
-                        <Grid Margin="0,2,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding NewExecutablePath}" ToolTip="Path to launch if app is not running (e.g., C:\Program Files\Google\Chrome\Application\chrome.exe)"/>
-                            <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseExecutableCommand}" Margin="5,0,0,0" Padding="5,2"/>
-                        </Grid>
-                    </StackPanel>
+                    <CheckBox IsChecked="{Binding AutoStartAsAdmin}" Margin="0,0,0,12">
+                        <TextBlock TextWrapping="Wrap">
+                            <Run Text="以管理员身份自启动 (Auto-start as Administrator)" FontWeight="SemiBold"/>
+                            <LineBreak/>
+                            <Run Text="开启后，启动时自动申请管理员权限，使快捷键可在任务管理器或游戏等高权限进程中正常生效。" FontSize="11" Foreground="Gray"/>
+                        </TextBlock>
+                    </CheckBox>
+                    
+                    <CheckBox IsChecked="{Binding WhitelistMode}" Margin="0,0,0,0">
+                        <TextBlock TextWrapping="Wrap">
+                            <Run Text="白名单模式 (Whitelist Mode)" FontWeight="SemiBold"/>
+                            <LineBreak/>
+                            <Run Text="只在浮动栏中显示已配置快捷键的应用程序（默认不勾选：展示所有窗口）。" FontSize="11" Foreground="Gray"/>
+                        </TextBlock>
+                    </CheckBox>
                 </StackPanel>
-            </StackPanel>
-        </Border>
+            </TabItem>
+        </TabControl>
 
-        <!-- List -->
-        <DataGrid Grid.Row="3" ItemsSource="{Binding AppConfigs}" AutoGenerateColumns="False" CanUserAddRows="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Process Name" Binding="{Binding ProcessName}" Width="*"/>
-                <DataGridTextColumn Header="Key" Binding="{Binding ShortcutKey}" Width="50"/>
-                <DataGridTextColumn Header="Exe Path" Binding="{Binding ExecutablePath}" Width="2*"/>
-                <DataGridTemplateColumn Width="70">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="Remove" Command="{Binding DataContext.RemoveConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
-
-        <!-- Save -->
-        <Button Grid.Row="4" Content="Save Settings" Command="{Binding SaveCommand}" Margin="0,10,0,0" Height="30" FontWeight="Bold"/>
+        <!-- Save Button at Bottom -->
+        <Button Grid.Row="1" Content="保存设置 (Save Settings)" Command="{Binding SaveCommand}" Margin="0,10,0,0" Height="32" FontWeight="Bold"/>
     </Grid>
 </Window>

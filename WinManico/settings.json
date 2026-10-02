@@ -1,10 +1,19 @@
 {
   "AppConfigs": [
     {
+      "ProcessName": "Antigravity",
+      "ShortcutKey": "A",
+      "ExecutablePath": "C:\\Users\\Jiesi Luo\\AppData\\Local\\Programs\\antigravity\\Antigravity.exe"
+    },
+    {
       "ProcessName": "cloudmusic",
       "ShortcutKey": "W",
       "ExecutablePath": "D:\\Program Files (x86)\\NetEase\\CloudMusic\\cloudmusic.exe"
     }
+  ],
+  "Blacklist": [
+    "Diablo IV",
+    "Diablo IV Launcher"
   ],
   "AutoStartAsAdmin": false,
   "WhitelistMode": false

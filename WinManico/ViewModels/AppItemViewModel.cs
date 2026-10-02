@@ -85,19 +85,60 @@ namespace WinManico.ViewModels
             else if (!string.IsNullOrEmpty(ExecutablePath))
             {
                 // No windows, but we have a launch path
-                try
+                Task.Run(async () =>
                 {
-                    Logger.Info($"[ACTIVATE] Launching from {ExecutablePath}");
-                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    try
                     {
-                        FileName = ExecutablePath,
-                        UseShellExecute = true
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error($"[ACTIVATE] ERROR launching app: {ex.Message}");
-                }
+                        Logger.Info($"[ACTIVATE] Launching from {ExecutablePath}");
+
+                        // 1. Snapshot existing windows
+                        var beforeHandles = _windowManager.GetOpenWindows().Select(w => w.Handle).ToHashSet();
+
+                        // 2. Launch
+                        var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = ExecutablePath,
+                            UseShellExecute = true
+                        });
+
+                        // 3. Poll for the new window to appear (up to 3 seconds)
+                        // This handles cases like Explorer.exe where Process.Start returns null or the window appears asynchronously
+                        string targetProcessName = System.IO.Path.GetFileNameWithoutExtension(ExecutablePath);
+                        
+                        for (int i = 0; i < 15; i++) // 15 * 200ms = 3 seconds
+                        {
+                            await Task.Delay(200);
+
+                            var currentWindows = _windowManager.GetOpenWindows();
+                            // Find any window that wasn't there before
+                            var newWindow = currentWindows.FirstOrDefault(w => !beforeHandles.Contains(w.Handle));
+                            
+                            if (newWindow != null)
+                            {
+                                // Stronger check: Does it match the process we just launched?
+                                // If Process.Start return null (Explorer), we rely on the filename matching.
+                                if (newWindow.ProcessName.Contains(targetProcessName, StringComparison.OrdinalIgnoreCase) || 
+                                    (process != null && process.ProcessName.Contains(newWindow.ProcessName, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    Logger.Info($"[ACTIVATE] New window detected: {newWindow.Title}. Forcing Foreground.");
+                                    _windowManager.SwitchToWindow(newWindow.Handle);
+                                    return;
+                                }
+                                
+                                // Fallback: If we found A new window but name doesn't match perfectly, 
+                                // it might still be it (e.g. wrapper processes). 
+                                // For now, let's just log it and maybe try it if we get desperate?
+                                // Actually, for Explorer, the process name IS "explorer".
+                            }
+                        }
+
+                        Logger.Info("[ACTIVATE] Timed out waiting for new window.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"[ACTIVATE] ERROR launching app: {ex.Message}");
+                    }
+                });
             }
         }
     }

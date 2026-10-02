@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Drawing;
 using System.Windows.Forms;
 using System;
@@ -58,8 +58,15 @@ namespace WinManico
             }
 
             _notifyIcon = new NotifyIcon();
-            // Use a default system icon or load one. For now, use a system icon.
-            _notifyIcon.Icon = new System.Drawing.Icon("icon.ico"); 
+            string iconPath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
+            if (System.IO.File.Exists(iconPath))
+            {
+                _notifyIcon.Icon = new System.Drawing.Icon(iconPath);
+            }
+            else
+            {
+                _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+            }
             _notifyIcon.Visible = true;
             _notifyIcon.Text = "WinManico";
 

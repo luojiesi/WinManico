@@ -143,21 +143,32 @@ namespace WinManico.Core
         {
             lock (_switchLock)
             {
-                // Simple toggle logic: if requesting the same window as last time, swap to the previous one
-                if (_lastTargetWindow == hWnd && _previousWindow != IntPtr.Zero && _previousWindow != hWnd)
+                // Correct Toggle Logic:
+                // Only toggle if the requested window IS ALREADY the Foreground Window.
+                // It doesn't matter if we targeted it last time. If the user clicked away, we want to bring it BACK, not toggle away.
+                IntPtr currentForeground = NativeMethods.GetForegroundWindow();
+
+                if (currentForeground == hWnd && _previousWindow != IntPtr.Zero && _previousWindow != hWnd)
                 {
-                    // Toggle back
-                    Logger.Debug($"[SWITCH] Toggling: {hWnd} -> {_previousWindow}");
+                    // It IS active. Toggle back to the previous one.
+                    Logger.Debug($"[SWITCH] Toggling BACK: {hWnd} -> {_previousWindow}");
                     IntPtr temp = _previousWindow;
-                    _previousWindow = _lastTargetWindow;
+                    // We keep _lastTargetWindow as hWnd because we are technically leaving it, 
+                    // but semantic toggle means we are "visiting" previous.
+                    // Actually, if we toggle back to B, B becomes the new "Last Target".
+                    _previousWindow = hWnd; 
                     _lastTargetWindow = temp;
                     hWnd = temp;
                 }
                 else
                 {
-                    // Regular switch - remember this as a new target
-                    Logger.Debug($"[SWITCH] Switching to {hWnd} from {_lastTargetWindow}");
-                    _previousWindow = _lastTargetWindow;  // Previous target becomes the "go back" window
+                    // It is NOT active (or we have no history). Bring it to front.
+                    Logger.Debug($"[SWITCH] Switching TO {hWnd} (Current: {currentForeground})");
+                    
+                    if (currentForeground != hWnd)
+                    {
+                        _previousWindow = currentForeground; // Update history: We came FROM here
+                    }
                     _lastTargetWindow = hWnd;
                 }
             }

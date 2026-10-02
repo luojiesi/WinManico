@@ -20,16 +20,23 @@ namespace WinManico.Core
         public event EventHandler AltSessionCancelled;
 
         private bool _isAltDown = false;
+        private bool _isBlacklistedSession = false;
         private bool _currentAltSessionHadKeypress = false; // New flag to track usage
         private DateTime _lastAltUpTime = DateTime.MinValue;
         private const int DoublePressThresholdMs = 300; // Tighter threshold (300ms) for cleaner feel
-        private readonly Settings _settings;
+        private Settings _settings;
 
         public KeyboardHook(Settings settings)
         {
             _settings = settings;
             _proc = HookCallback;
             _hookID = SetHook(_proc);
+        }
+
+        public void UpdateSettings(Settings newSettings)
+        {
+            _settings = newSettings;
+            Logger.Debug($"[HOOK] Settings updated. Blacklist count: {_settings.Blacklist?.Count ?? 0}");
         }
 
         private IntPtr SetHook(NativeMethods.LowLevelKeyboardProc proc)
@@ -53,8 +60,16 @@ namespace WinManico.Core
                 {
                     if (wParam == (IntPtr)NativeMethods.WM_SYSKEYDOWN || wParam == (IntPtr)NativeMethods.WM_KEYDOWN)
                     {
-                        if (!_isAltDown) 
+                        if (!_isAltDown && !_isBlacklistedSession) 
                         {
+                            // Check if current foreground application is blacklisted
+                            if (IsForegroundBlacklisted())
+                            {
+                                _isBlacklistedSession = true;
+                                Logger.Debug("[HOOK] Foreground application is blacklisted. Alt ignored.");
+                                return NativeMethods.CallNextHookEx(_hookID, nCode, wParam, lParam);
+                            }
+
                             _isAltDown = true;
                             
                             // Check for modifiers immediately. If Ctrl/Shift/Win are down, this is NOT a pure Alt tap.
@@ -90,6 +105,13 @@ namespace WinManico.Core
                     }
                     else if (wParam == (IntPtr)NativeMethods.WM_SYSKEYUP || wParam == (IntPtr)NativeMethods.WM_KEYUP)
                     {
+                        if (_isBlacklistedSession)
+                        {
+                            _isBlacklistedSession = false;
+                            Logger.Debug("[HOOK] Alt UP in blacklisted session. Reset.");
+                            return NativeMethods.CallNextHookEx(_hookID, nCode, wParam, lParam);
+                        }
+
                          _isAltDown = false;
                          
                          if (_currentAltSessionHadKeypress)
@@ -111,6 +133,15 @@ namespace WinManico.Core
                 // Only process non-Alt keys if flag says Alt is down
                 else if (_isAltDown)
                 {
+                    // If foreground app became blacklisted, cancel session immediately
+                    if (IsForegroundBlacklisted())
+                    {
+                        Logger.Debug("[HOOK] Key pressed but foreground app is blacklisted. Cancelling session.");
+                        _isAltDown = false;
+                        AltSessionCancelled?.Invoke(this, EventArgs.Empty);
+                        return NativeMethods.CallNextHookEx(_hookID, nCode, wParam, lParam);
+                    }
+
                     // Mark this session as having activity
                     if ((wParam == (IntPtr)NativeMethods.WM_KEYDOWN || wParam == (IntPtr)NativeMethods.WM_SYSKEYDOWN))
                     {
@@ -206,6 +237,47 @@ namespace WinManico.Core
                    vkCode == 0xA1 || // VK_RSHIFT
                    vkCode == 0xA2 || // VK_LCONTROL
                    vkCode == 0xA3;   // VK_RCONTROL
+        }
+
+        private bool IsForegroundBlacklisted()
+        {
+            var blacklist = _settings.Blacklist;
+            if (blacklist == null || blacklist.Count == 0)
+                return false;
+
+            try
+            {
+                IntPtr fgWnd = NativeMethods.GetForegroundWindow();
+                if (fgWnd == IntPtr.Zero) return false;
+
+                NativeMethods.GetWindowThreadProcessId(fgWnd, out uint processId);
+                if (processId == 0) return false;
+
+                using var process = Process.GetProcessById((int)processId);
+                string procName = process.ProcessName;
+
+                foreach (var item in blacklist)
+                {
+                    if (string.IsNullOrWhiteSpace(item)) continue;
+
+                    string target = item.Trim();
+                    if (target.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        target = target.Substring(0, target.Length - 4).Trim();
+                    }
+
+                    if (procName.Equals(target, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Debug($"[BLACKLIST] Error checking foreground window: {ex.Message}");
+            }
+
+            return false;
         }
 
         public void Dispose()

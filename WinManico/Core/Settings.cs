@@ -10,6 +10,13 @@ namespace WinManico.Core
         public string ProcessName { get; set; }
         public string ShortcutKey { get; set; } // "1", "Q", "F1", etc.
         public string? ExecutablePath { get; set; } // Optional: path to launch if not running
+
+        // Process.ProcessName never includes ".exe", so "Discord.exe" would never match a running window
+        public static string NormalizeProcessName(string name)
+        {
+            name = name?.Trim() ?? "";
+            return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
+        }
     }
 
     public class Settings
@@ -17,8 +24,11 @@ namespace WinManico.Core
         private static readonly string ConfigPath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "settings.json");
 
         public List<AppConfig> AppConfigs { get; set; } = new List<AppConfig>();
+        public List<string> Blacklist { get; set; } = new List<string>();
         public bool AutoStartAsAdmin { get; set; } = false;
         public bool WhitelistMode { get; set; } = false;
+
+        public static event Action<Settings>? SettingsChanged;
 
         public static Settings Load()
         {
@@ -32,6 +42,12 @@ namespace WinManico.Core
                     // Sync Logger
                     if (loadedSettings != null)
                     {
+                        loadedSettings.Blacklist ??= new List<string>();
+                        loadedSettings.AppConfigs ??= new List<AppConfig>();
+                        foreach (var config in loadedSettings.AppConfigs)
+                        {
+                            config.ProcessName = AppConfig.NormalizeProcessName(config.ProcessName);
+                        }
                         Logger.CurrentLevel = loadedSettings.LogLevel;
                         return loadedSettings;
                     }
@@ -62,6 +78,7 @@ namespace WinManico.Core
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(this, options);
                 File.WriteAllText(ConfigPath, json);
+                SettingsChanged?.Invoke(this);
             }
             catch { }
         }

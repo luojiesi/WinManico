@@ -15,6 +15,9 @@ namespace WinManico.ViewModels
         private ObservableCollection<AppConfig> _appConfigs;
 
         [ObservableProperty]
+        private ObservableCollection<string> _blacklist;
+
+        [ObservableProperty]
         private string _newProcessName;
 
         [ObservableProperty]
@@ -23,10 +26,21 @@ namespace WinManico.ViewModels
         [ObservableProperty]
         private string? _newExecutablePath;
 
+        [ObservableProperty]
+        private string _newBlacklistProcessName = "";
+
+        [ObservableProperty]
+        private ObservableCollection<string> _runningProcesses = new();
+
+        [ObservableProperty]
+        private string? _selectedRunningProcess;
+
         public SettingsViewModel()
         {
             _settings = Settings.Load(); // Reload fresh
             AppConfigs = new ObservableCollection<AppConfig>(_settings.AppConfigs);
+            Blacklist = new ObservableCollection<string>(_settings.Blacklist ?? new System.Collections.Generic.List<string>());
+            RefreshRunningProcesses();
         }
 
         public bool AutoStartAsAdmin
@@ -70,8 +84,10 @@ namespace WinManico.ViewModels
                  return;
             }
 
+            string processName = AppConfig.NormalizeProcessName(NewProcessName);
+
             // Check duplicates
-            if (AppConfigs.Any(c => c.ProcessName.Equals(NewProcessName, System.StringComparison.OrdinalIgnoreCase)))
+            if (AppConfigs.Any(c => c.ProcessName.Equals(processName, System.StringComparison.OrdinalIgnoreCase)))
             {
                  System.Windows.MessageBox.Show("This app is already configured.");
                  return;
@@ -85,7 +101,7 @@ namespace WinManico.ViewModels
 
             var newConfig = new AppConfig 
             { 
-                ProcessName = NewProcessName, 
+                ProcessName = processName,
                 ShortcutKey = key,
                 ExecutablePath = string.IsNullOrWhiteSpace(NewExecutablePath) ? null : NewExecutablePath
             };
@@ -129,13 +145,90 @@ namespace WinManico.ViewModels
         }
 
         [RelayCommand]
+        public void AddBlacklist()
+        {
+            string name = NewBlacklistProcessName;
+            if (string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(SelectedRunningProcess))
+            {
+                name = SelectedRunningProcess;
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                System.Windows.MessageBox.Show("Please enter or select a process name for the blacklist.", "WinManico");
+                return;
+            }
+
+            name = name.Trim();
+            if (name.EndsWith(".exe", System.StringComparison.OrdinalIgnoreCase))
+            {
+                name = name.Substring(0, name.Length - 4).Trim();
+            }
+
+            if (Blacklist.Any(p => p.Equals(name, System.StringComparison.OrdinalIgnoreCase)))
+            {
+                System.Windows.MessageBox.Show($"'{name}' is already in the blacklist.", "WinManico");
+                return;
+            }
+
+            Blacklist.Add(name);
+            NewBlacklistProcessName = "";
+        }
+
+        [RelayCommand]
+        public void RemoveBlacklist(string processName)
+        {
+            if (!string.IsNullOrEmpty(processName))
+            {
+                Blacklist.Remove(processName);
+            }
+        }
+
+        [RelayCommand]
+        public void BrowseBlacklistExe()
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Executable Files (*.exe)|*.exe|All Files (*.*)|*.*",
+                Title = "Select Blacklisted Game / Application Executable"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var fileName = System.IO.Path.GetFileNameWithoutExtension(dialog.FileName);
+                NewBlacklistProcessName = fileName;
+            }
+        }
+
+        [RelayCommand]
+        public void RefreshRunningProcesses()
+        {
+            try
+            {
+                var wm = new WindowManager();
+                var procs = wm.GetOpenWindows()
+                    .Select(w => w.ProcessName)
+                    .Where(p => !string.IsNullOrWhiteSpace(p))
+                    .Distinct(System.StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(p => p)
+                    .ToList();
+
+                RunningProcesses = new ObservableCollection<string>(procs);
+            }
+            catch
+            {
+                // Fallback to empty if error
+            }
+        }
+
+        [RelayCommand]
         public void Save()
         {
             _settings.AppConfigs = new System.Collections.Generic.List<AppConfig>(AppConfigs);
+            _settings.Blacklist = new System.Collections.Generic.List<string>(Blacklist);
             _settings.Save();
             
-            System.Windows.MessageBox.Show("Settings Saved. Please restart the application for key changes to take full effect.", "WinManico");
-            // Could trigger a reload event, but restart is safer for hooks.
+            System.Windows.MessageBox.Show("Settings saved and applied successfully!", "WinManico", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

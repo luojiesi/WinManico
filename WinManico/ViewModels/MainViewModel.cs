@@ -42,6 +42,8 @@ namespace WinManico.ViewModels
             _keyboardHook.KeyPressed += OnKeyPressed;
             _keyboardHook.DoubleAltDetected += OnDoubleAltDetected;
             _keyboardHook.AltSessionCancelled += OnAltSessionCancelled;
+
+            Settings.SettingsChanged += OnSettingsChanged;
             
             // Failsafe Timer: Poll key state to ensure UI doesn't get stuck
             _failsafeTimer = new System.Windows.Threading.DispatcherTimer();
@@ -74,6 +76,13 @@ namespace WinManico.ViewModels
              bool isWin = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LWIN) & 0x8000) != 0 || 
                           (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RWIN) & 0x8000) != 0;
              return isCtrl || isShift || isWin;
+        }
+
+        private void OnSettingsChanged(Settings newSettings)
+        {
+            _settings = newSettings;
+            _keyboardHook.UpdateSettings(newSettings);
+            Logger.Info("[SETTINGS] Settings updated dynamically in MainViewModel.");
         }
 
         private void OnAltSessionCancelled(object sender, EventArgs e)
@@ -225,6 +234,7 @@ namespace WinManico.ViewModels
         {
             // RELOAD SETTINGS to ensure we have the latest config (e.g. after user edits)
             _settings = Settings.Load();
+            _keyboardHook.UpdateSettings(_settings);
             
             Apps.Clear();
             var windows = _windowManager.GetOpenWindows();

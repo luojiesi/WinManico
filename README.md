@@ -9,7 +9,8 @@
 *   **🖥️ Virtual Desktop Support**: Seamlessly switches to windows even if they are on a different virtual desktop.
 *   **🎯 Smart Deduplication**: Groups multiple processes (like Steam's many helpers) into a single, clean entry.
 *   **⌨️ Native Pass-Through**: Only intercepts the keys you configure. `Alt+Tab`, `Alt+F4`, and `Alt+~` continue to work exactly as you expect.
-*   **⚙️ Fully Configurable**: Customize your hotkeys and preferred apps in `settings.json`.
+*   **🛑 Game / App Blacklist**: Completely disables switching and Alt interception when configured apps (e.g. Diablo, full-screen games) are in the foreground, preventing macro and hotkey conflicts.
+*   **⚙️ Fully Configurable**: Customize your hotkeys, blacklist, and preferences in Settings or `settings.json`.
 
 ## 📥 Download
 
@@ -25,7 +26,7 @@ I built WinManico because I missed that fluid, muscle-memory-driven workflow on 
 
 ## 🛠️ Configuration
 
-Configure your apps and preferences in `settings.json`:
+Configure your apps and preferences in Settings or `settings.json`:
 
 ```json
 {
@@ -33,6 +34,10 @@ Configure your apps and preferences in `settings.json`:
     { "ProcessName": "chrome", "ShortcutKey": "Q" },
     { "ProcessName": "steam", "ShortcutKey": "S" },
     { "ProcessName": "WindowsTerminal", "ShortcutKey": "1" }
+  ],
+  "Blacklist": [
+    "Diablo IV",
+    "D2R"
   ],
   "LogLevel": 2
 }
